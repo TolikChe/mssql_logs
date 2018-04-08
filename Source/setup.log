@@ -4,3 +4,16 @@
 "OK" - Create procedure 'log_info'
 "OK" - Create procedure 'safe_execute'
 "OK" - Create procedure 'create_table'
+Контекст базы данных изменен на "test_db".
+DROP TABLE test_schema.test_char
+Event: Create table test_char. Duration: 0.00. Result OK
+DROP TABLE test_schema.student1
+Event: Create table student1. Duration: 0.00. Result OK
+DROP TABLE test_schema.student2
+Event: Create table student2. Duration: 0.00. Result OK
+DROP TABLE test_schema.student3
+Event: Create table student3. Duration: 0.00. Result OK
+Контекст базы данных изменен на "test_db".
+Event: fill student 1. Duration: 96.00. Result OK
+Event: fill student 2. Duration: 203.00. Result OK
+Event: fill student 3. Duration: 296.00. Result OK

@@ -46,35 +46,38 @@ BEGIN
 											  @sql_text varchar(4000), 
 											  @log_enabled int
 	AS
-		DECLARE @result_text varchar(1000)
-		DECLARE @event int
+		DECLARE @result_text varchar(1000);
+		DECLARE @event int;
 		--
-		DECLARE @start_time datetime
-		DECLARE @finish_time datetime
-		DECLARE @diff decimal(5,2)
+		DECLARE @start_time datetime;
+		DECLARE @finish_time datetime;
+		DECLARE @diff decimal(5,2);
 	BEGIN
-		SET @start_time = sysdatetime()
-		SET @result_text = ''OK''
+		SET @start_time = sysdatetime();
+		SET @result_text = ''OK'';
 		
 		BEGIN TRY
-			EXEC (@sql_text)
-			SET @event = 3 -- info
+			EXEC (@sql_text);
+			SET @event = 3; -- info
 		END TRY
 		BEGIN CATCH
-			SET @result_text = CONCAT(''Error: '', ERROR_NUMBER(), '' Error message: '', ERROR_MESSAGE())
-			SET @event = 1 -- error
+			SET @result_text = CONCAT(''Error: '', ERROR_NUMBER(), '' Error message: '', ERROR_MESSAGE());
+			SET @event = 1 -- error;
 		END CATCH
 		
-		SET @finish_time = sysdatetime()
-		SET @diff = DATEDIFF(MILLISECOND, @start_time, @finish_time)
+		SET @finish_time = sysdatetime();
+		SET @diff = DATEDIFF(MILLISECOND, @start_time, @finish_time);
 		
 		IF @log_enabled != 0
-			PRINT (CONCAT (''Event: '', @name, ''. Duration: '', @diff, ''. Result '', @result_text))
+		BEGIN
 			EXEC ' + @schema_name + '.log_info @e_name = @name,
 									  @e_level = @event,
 									  @e_duration = @diff,
 									  @e_sql = @sql_text,
-									  @e_message = @result_text
+									  @e_message = @result_text;
+									  
+			PRINT (CONCAT (''Event: '', @name, ''. Duration: '', @diff, ''. Result '', @result_text));									  
+		END
 	END');
 	PRINT('"OK" - Create procedure ''safe_execute''');
 
@@ -82,26 +85,31 @@ BEGIN
 	------------------------------------------------
 	-- Create table from sql text
 	------------------------------------------------
-	IF OBJECT_ID(@db_name + '.' +@schema_name +'.create_table', 'P') IS NOT NULL
+	IF OBJECT_ID( @db_name + '.' + @schema_name +'.create_table', 'P') IS NOT NULL
 	BEGIN
 		EXEC ('DROP PROCEDURE ' + @schema_name + '.create_table;'); 
 	END;
 	--
-	EXEC ('CREATE PROCEDURE test_schema.create_table @table_name varchar(100), 
+	EXEC ('CREATE PROCEDURE ' + @schema_name + '.create_table @table_name varchar(100), 
 											  @table_text varchar(4000), 
 											  @use_log int = 0,
 											  @force int = 0 
 	AS
 		DECLARE @action_name varchar(100)
+		DECLARE @st_name varchar(200)
+		DECLARE @dst_name varchar(200)
 	BEGIN
 		SET @action_name = ''Create table '' + @table_name
+		SET @st_name = CONCAT (''' + @schema_name + '.'', @table_name)
+		SET @dst_name = CONCAT (''' + @db_name + '.' + @schema_name + '.'', @table_name)
 		
-		IF @force != 0 AND OBJECT_ID(@table_name, ''U'') IS NOT NULL 
-			exec (''DROP TABLE '' + @table_name)
+		IF @force != 0 AND OBJECT_ID(@dst_name, ''U'') IS NOT NULL 
+		BEGIN
+			EXEC (''DROP TABLE '' + @st_name)
+			PRINT (''DROP TABLE '' + @st_name)
+		END
 		
-		exec ' + @schema_name + '.safe_execute @name = action_name, 
-									  @sql_text = @table_text, 
-									  @log_enabled = @use_log
+		EXEC ' + @schema_name + '.safe_execute @name = @action_name, @sql_text = @table_text, @log_enabled = @use_log;
 	END')
 	PRINT('"OK" - Create procedure ''create_table''');	
 END 
